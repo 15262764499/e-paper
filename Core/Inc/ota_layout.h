@@ -1,0 +1,29 @@
+#ifndef OTA_LAYOUT_H
+#define OTA_LAYOUT_H
+
+#include <stdint.h>
+
+/* STM32G070CBT6, 128 KiB single-bank Flash, 2 KiB erase pages. */
+#define OTA_FLASH_BASE_ADDRESS       0x08000000UL
+#define OTA_BOOTLOADER_BASE_ADDRESS  0x08000000UL
+#define OTA_BOOTLOADER_SIZE          0x00006000UL /* 24 KiB, pages 0..11 */
+#define OTA_APPLICATION_BASE_ADDRESS 0x08006000UL
+#define OTA_APPLICATION_MAX_SIZE     0x00012000UL /* 72 KiB, pages 12..47 */
+#define OTA_CALENDAR_BASE_ADDRESS    0x08018000UL
+#define OTA_CALENDAR_REGION_SIZE     0x00007800UL /* 30 KiB, pages 48..62 */
+#define OTA_METADATA_BASE_ADDRESS    0x0801F800UL /* final page, page 63 */
+#define OTA_METADATA_REGION_SIZE     0x00000800UL
+
+#define OTA_BOOT_REQUEST_MAGIC       0x4F544131UL /* OTA1, RTC backup DR3 */
+#define OTA_METADATA_PROGRESS_MAGIC  0x4F544150UL /* OTAP */
+#define OTA_METADATA_VALID_MAGIC     0x4F544156UL /* OTAV */
+
+#define OTA_BOOT_PROTOCOL_VERSION    2U
+#define OTA_APPLICATION_VERSION      0x00010005UL /* semantic 1.0. */
+
+/* A release targets a hardware class, not an individual STM32 UID. */
+#define OTA_STM32_DEVICE_ID          0x0460U
+#define OTA_PRODUCT_ID               0x00000001UL
+#define OTA_HARDWARE_REVISION        0x0001U
+
+#endif /* OTA_LAYOUT_H */
