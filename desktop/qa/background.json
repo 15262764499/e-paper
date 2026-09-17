@@ -1,0 +1,12 @@
+{
+  "cpu": 3.5,
+  "gpu": 11.0,
+  "memory": 77.5,
+  "window_visible": false,
+  "tray_visible": true,
+  "state": "disconnected",
+  "width": 1320,
+  "height": 920,
+  "samples": 13,
+  "exit_code": 0
+}

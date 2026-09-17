@@ -165,6 +165,23 @@ int main(void)
   key=GPIO_PIN_SET;advance(31);
   field=NFC_FIELD_ON;nfc_result=HAL_OK;LED595_PollNfc();assert(s_nfc);
   field=0;advance(301);LED595_PollNfc();assert(!s_nfc);
+  LED595_SetComputer(10000,50,100);advance(10);
+  LED595_GetStatus(&state);
+  assert(state.effective_mode==4 && state.duty[2]==40 && state.duty[6]==50);
+  field=NFC_FIELD_ON;advance(40);LED595_PollNfc();LED595_GetStatus(&state);
+  assert(state.effective_mode==3);
+  field=0;advance(301);LED595_PollNfc();LED595_GetStatus(&state);
+  assert(state.effective_mode==4 && state.duty[6]==50);
+  advance(3001);LED595_GetStatus(&state);
+  assert(state.effective_mode==LED_MODE_OFF);
+  for(unsigned q=0;q<8;++q) assert(state.duty[q]==0);
+  LED595_SetComputer(5000,80,100);advance(600);
+  LED595_GetStatus(&state);assert(state.duty[2]==64);
+  LED595_SetComputer(5000,80,100);LED595_GetStatus(&state);assert(state.duty[2]==64);
+  LED595_StopComputer();advance(10);LED595_GetStatus(&state);
+  assert(state.effective_mode==LED_MODE_OFF);
+  LED595_SetComputer(10000,100,100);press();LED595_GetStatus(&state);
+  assert(state.effective_mode==LED_MODE_HUMIDITY);
   /* Actual IRQ consumes a published frame, holds it until next frame. */
   LED_Effect(1500,true,false,false,0,duty);PublishDuty(duty);
   s_slot=0;mock_tim.SR=TIM_SR_UIF;LED595_TimerIRQ();

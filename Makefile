@@ -38,6 +38,8 @@ BUILD_DIR = build
 C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/led_595.c \
+Core/Src/pulse_protocol.c \
+Core/Src/pulse_uart.c \
 Core/Src/aht20.c \
 Core/Src/calendar_flash.c \
 Core/Src/calendar_overlay.c \
@@ -87,10 +89,10 @@ PREFIX = arm-none-eabi-
 # The gcc compiler bin path can be either defined in make command via GCC_PATH variable (> make GCC_PATH=xxx)
 # either it can be added to the PATH environment variable.
 ifdef GCC_PATH
-CC = $(GCC_PATH)/$(PREFIX)gcc
-AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
-CP = $(GCC_PATH)/$(PREFIX)objcopy
-SZ = $(GCC_PATH)/$(PREFIX)size
+CC = "$(GCC_PATH)/$(PREFIX)gcc"
+AS = "$(GCC_PATH)/$(PREFIX)gcc" -x assembler-with-cpp
+CP = "$(GCC_PATH)/$(PREFIX)objcopy"
+SZ = "$(GCC_PATH)/$(PREFIX)size"
 else
 CC = $(PREFIX)gcc
 AS = $(PREFIX)gcc -x assembler-with-cpp
@@ -200,13 +202,21 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(BIN) $< $@	
 	
 $(BUILD_DIR):
+ifeq ($(OS),Windows_NT)
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build-directory.ps1 -Path "$(BUILD_DIR)"
+else
 	mkdir -p $@
+endif
 
 #######################################
 # clean up
 #######################################
 clean:
+ifeq ($(OS),Windows_NT)
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build-directory.ps1 -Path "$(BUILD_DIR)" -Clean
+else
 	-rm -fR $(BUILD_DIR)
+endif
   
 #######################################
 # dependencies

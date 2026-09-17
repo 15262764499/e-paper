@@ -61,6 +61,7 @@ extern DMA_HandleTypeDef hdma_usart2_rx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
+extern UART_HandleTypeDef huart1;
 
 /* USER CODE END EV */
 
@@ -189,6 +190,11 @@ void USART2_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void USART1_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart1);
+}
+
 void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 {
   LED595_TimerIRQ();

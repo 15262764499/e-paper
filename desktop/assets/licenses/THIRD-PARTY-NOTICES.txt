@@ -1,0 +1,19 @@
+Pulse Windows 1.0 third-party components
+
+Python: https://www.python.org/ (PSF license)
+PySide6 / Shiboken6 / Qt 6.9.2: https://www.qt.io/qt-for-python
+  Source: https://code.qt.io/cgit/pyside/pyside-setup.git/tag/?h=v6.9.2
+  Qt source: https://code.qt.io/cgit/qt/qtbase.git/tag/?h=v6.9.2
+  Distributed dynamically as DLLs / Python extensions in _internal.
+  Open-source LGPLv3/GPLv3 licensing applies to the included Qt modules;
+  corresponding license texts are supplied. No Qt source has been modified.
+  The distribution does not restrict replacing the included Qt libraries or
+  reverse engineering for debugging modifications to those libraries.
+psutil 7.0.0: https://github.com/giampaolo/psutil (BSD-3-Clause)
+pyserial 3.5: https://github.com/pyserial/pyserial (BSD-3-Clause)
+nvidia-ml-py: https://pypi.org/project/nvidia-ml-py/ (BSD-3-Clause)
+PyInstaller: https://pyinstaller.org/ (GPL with bootloader exception)
+
+Windows fonts are used from the operating system and are not redistributed.
+NVIDIA drivers and NVML DLL are supplied by the user's graphics driver and
+are not included in the Pulse distribution.

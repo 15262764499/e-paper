@@ -23,10 +23,10 @@ Core/Src/system_stm32g0xx.c
 ASM_SOURCES = startup_stm32g070xx.s
 PREFIX = arm-none-eabi-
 ifdef GCC_PATH
-CC = $(GCC_PATH)/$(PREFIX)gcc
-AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
-CP = $(GCC_PATH)/$(PREFIX)objcopy
-SZ = $(GCC_PATH)/$(PREFIX)size
+CC = "$(GCC_PATH)/$(PREFIX)gcc"
+AS = "$(GCC_PATH)/$(PREFIX)gcc" -x assembler-with-cpp
+CP = "$(GCC_PATH)/$(PREFIX)objcopy"
+SZ = "$(GCC_PATH)/$(PREFIX)size"
 else
 CC = $(PREFIX)gcc
 AS = $(PREFIX)gcc -x assembler-with-cpp
@@ -84,10 +84,18 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(CP) -O binary -S $< $@
 
 $(BUILD_DIR):
+ifeq ($(OS),Windows_NT)
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build-directory.ps1 -Path "$(BUILD_DIR)"
+else
 	mkdir -p $@
+endif
 
 clean:
+ifeq ($(OS),Windows_NT)
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build-directory.ps1 -Path "$(BUILD_DIR)" -Clean
+else
 	-rm -fR $(BUILD_DIR)
+endif
 
 .PHONY: all clean
 -include $(wildcard $(BUILD_DIR)/*.d)

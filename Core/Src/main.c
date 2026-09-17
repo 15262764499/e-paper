@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "aht20.h"
 #include "led_595.h"
+#include "pulse_uart.h"
 #include "calendar_service.h"
 #include "gdem042f86.h"
 #include "image_transfer.h"
@@ -160,6 +161,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  if (!PulseUART_Init(&huart1)) Error_Handler();
   if (!RTC_Calendar_Init(&hrtc))
   {
     Error_Handler();
@@ -188,6 +190,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    PulseUART_Poll();
     LED595_Poll();
     ImageTransfer_Poll();
     CalendarService_Poll((ImageTransfer_GetState() == IMAGE_STATE_IDLE)
@@ -559,6 +562,7 @@ void HAL_Delay(uint32_t delay)
   while ((uint32_t)(HAL_GetTick() - started) < wait)
   {
     LED595_PollNfc();
+    PulseUART_Poll();
   }
 }
 
@@ -1153,7 +1157,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
+  PulseUART_OnError(huart);
   ImageTransfer_OnUartError(huart);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  PulseUART_OnRx(huart);
 }
 
 /* USER CODE END 4 */

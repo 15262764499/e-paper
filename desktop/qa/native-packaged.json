@@ -1,0 +1,10 @@
+{
+  "cpu": 6.9,
+  "gpu": 1.0,
+  "memory": 82.2,
+  "state": "disconnected",
+  "width": 1320,
+  "height": 920,
+  "samples": 13,
+  "exit_code": 0
+}

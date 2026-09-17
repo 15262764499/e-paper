@@ -1,0 +1,3 @@
+https://raw.githubusercontent.com/qt/qtbase/v6.9.2/LICENSES/LGPL-3.0-only.txt
+https://raw.githubusercontent.com/qt/qtbase/v6.9.2/LICENSES/GPL-3.0-only.txt
+https://raw.githubusercontent.com/pyserial/pyserial/v3.5/LICENSE.txt

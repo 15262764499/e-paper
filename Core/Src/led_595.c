@@ -1,5 +1,6 @@
 #include "led_595.h"
 #include "led_effect.h"
+#include "pulse_effect.h"
 #include "aht20.h"
 #include "main.h"
 
@@ -24,6 +25,8 @@ static volatile bool s_ready;
 static I2C_HandleTypeDef *s_i2c;
 static volatile bool s_nfc;
 static volatile LED_Mode s_mode;
+/* Updated in main under IRQ lock; advanced/expired by SysTick. */
+static PulseEffect s_computer;
 static uint32_t s_nfc_started;
 /* UINT32_MAX represents an invalid sample; one atomic write publishes it. */
 static volatile uint32_t s_humidity = UINT32_MAX;
@@ -158,6 +161,7 @@ bool LED595_Init(void)
                  == GPIO_PIN_RESET;
   s_button_stable = s_button_raw; /* A held key at boot is not a press. */
   s_mode = LED_MODE_OFF;
+  s_computer.active = false;
   s_nfc = false;
   s_humidity = UINT32_MAX;
   __HAL_TIM_CLEAR_FLAG(&s_timer, TIM_FLAG_UPDATE);
@@ -213,8 +217,10 @@ void LED595_Tick(void)
   s_last_update = now;
   uint8_t duty[8];
   uint32_t humidity = s_humidity;
-  LED_Effect((uint32_t)(now - (s_nfc ? s_nfc_started : s_started)), s_nfc,
-              s_mode, humidity != UINT32_MAX, humidity, duty);
+  PulseEffect_Duty(&s_computer, now, duty);
+  if (s_nfc || !s_computer.active)
+    LED_Effect((uint32_t)(now - (s_nfc ? s_nfc_started : s_started)), s_nfc,
+                s_mode, humidity != UINT32_MAX, humidity, duty);
   PublishDuty(duty);
 }
 
@@ -223,6 +229,7 @@ bool LED595_SetMode(LED_Mode mode)
   if ((unsigned)mode >= LED_MODE_COUNT) return false;
   uint32_t saved = __get_PRIMASK();
   __disable_irq();
+  s_computer.active = false;
   if (s_mode != mode)
   {
     s_mode = mode;
@@ -232,6 +239,20 @@ bool LED595_SetMode(LED_Mode mode)
   return true;
 }
 
+void LED595_SetComputer(uint16_t value, uint8_t brightness, uint8_t speed)
+{
+  uint32_t saved = __get_PRIMASK();
+  __disable_irq();
+  s_mode = LED_MODE_OFF; /* STOP or expiry cannot revive a stale local mode. */
+  PulseEffect_Set(&s_computer, HAL_GetTick(), value, brightness, speed);
+  __set_PRIMASK(saved);
+}
+
+void LED595_StopComputer(void)
+{
+  (void)LED595_SetMode(LED_MODE_OFF);
+}
+
 void LED595_GetStatus(LED595_Status *status)
 {
   if (status == NULL) return;
@@ -239,12 +260,20 @@ void LED595_GetStatus(LED595_Status *status)
   __disable_irq();
   uint32_t now = HAL_GetTick();
   bool nfc = s_nfc;
+  PulseEffect computer = s_computer;
   status->mode = (uint8_t)s_mode;
   status->effective_mode = nfc ? 3U : (uint8_t)s_mode;
   status->humidity = s_humidity;
   status->humidity_valid = s_humidity != UINT32_MAX;
   status->elapsed_ms = now - (nfc ? s_nfc_started : s_started);
   __set_PRIMASK(saved);
+  PulseEffect_Duty(&computer, now, status->duty);
+  if (!nfc && computer.active)
+  {
+    status->effective_mode = 4U;
+    status->elapsed_ms = computer.phase / 100U;
+    return;
+  }
   status->elapsed_ms %= status->effective_mode == LED_MODE_SPREAD
                          ? LED595_SPREAD_PERIOD_MS : LED595_BREATH_PERIOD_MS;
   LED_Effect(status->elapsed_ms, nfc, (LED_Mode)status->mode,
