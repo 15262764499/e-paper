@@ -19,7 +19,7 @@
 #define OTA_METADATA_VALID_MAGIC     0x4F544156UL /* OTAV */
 
 #define OTA_BOOT_PROTOCOL_VERSION    2U
-#define OTA_APPLICATION_VERSION      0x00010006UL /* semantic 1.0. */
+#define OTA_APPLICATION_VERSION      0x00010100UL /* semantic 1.0. */
 
 /* A release targets a hardware class, not an individual STM32 UID. */
 #define OTA_STM32_DEVICE_ID          0x0460U

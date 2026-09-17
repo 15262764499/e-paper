@@ -1,4 +1,5 @@
 #include "led_595.h"
+#include "pulse_environment.h"
 #include "led_effect.h"
 #include "pulse_effect.h"
 #include "aht20.h"
@@ -333,13 +334,21 @@ void LED595_Poll(void)
     s_humidity = status == AHT20_OK ? measurement.humidity_centi_percent
                                   : UINT32_MAX;
     s_sensor_pending = false;
+    PulseUART_ReportEnvironment((uint8_t)status,
+        status == AHT20_OK ? measurement.temperature_centi_c : 0,
+        status == AHT20_OK ? measurement.humidity_centi_percent : 0);
   }
-  else if (s_mode == LED_MODE_HUMIDITY && !s_nfc
+  else if (HAL_I2C_GetState(s_i2c) == HAL_I2C_STATE_READY
            && (uint32_t)(now - s_last_sensor) >= SENSOR_POLL_MS)
   {
     s_last_sensor = now;
     s_sensor_retry = now;
-    s_sensor_pending = AHT20_BeginMeasurement(s_i2c) == AHT20_OK;
-    if (!s_sensor_pending) s_humidity = UINT32_MAX;
+    AHT20_Status status = AHT20_BeginMeasurement(s_i2c);
+    s_sensor_pending = status == AHT20_OK;
+    if (!s_sensor_pending)
+    {
+      s_humidity = UINT32_MAX;
+      PulseUART_ReportEnvironment((uint8_t)status, 0, 0);
+    }
   }
 }

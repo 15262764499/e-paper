@@ -15,6 +15,10 @@ static GPIO_PinState key = GPIO_PIN_SET;
 static uint8_t field;
 static HAL_StatusTypeDef nfc_result = HAL_OK;
 static AHT20_Status sensor_result = AHT20_OK;
+static unsigned environment_reports;
+void PulseUART_ReportEnvironment(uint8_t status,int32_t temperature,uint32_t humidity)
+{ ++environment_reports;assert(status==(uint8_t)sensor_result);
+  if(status==0) {assert(temperature==2534);assert(humidity==6400);} }
 uint32_t HAL_GetTick(void) { return tick; }
 uint32_t HAL_RCC_GetPCLK1Freq(void) { return 16000000U; }
 void HAL_GPIO_WritePin(GPIO_TypeDef *p,uint32_t b,GPIO_PinState v) {(void)p;(void)b;(void)v;}
@@ -31,7 +35,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Read(I2C_HandleTypeDef *p,uint16_t a,uint16_t r,ui
 AHT20_Status AHT20_BeginMeasurement(I2C_HandleTypeDef *p)
 {(void)p;++sensor_begins;return sensor_result;}
 AHT20_Status AHT20_FinishMeasurement(I2C_HandleTypeDef *p,AHT20_Measurement *m)
-{(void)p;++sensor_finishes;m->humidity_centi_percent=6400U;return sensor_result;}
+{(void)p;++sensor_finishes;m->temperature_centi_c=2534;m->humidity_centi_percent=6400U;return sensor_result;}
 static void advance(uint32_t ms) {while(ms--) {++tick;LED595_Tick();}}
 static void press(void) {key=GPIO_PIN_RESET;advance(31);key=GPIO_PIN_SET;advance(31);}
 static void check_frame(const uint8_t duty[8])
@@ -190,6 +194,15 @@ int main(void)
   assert((uint8_t)mock_spi.DR==(uint8_t)~0x78U && mock_tim.ARR==799U);
   /* Busy SPI fails bounded and leaves OE blank. */
   mock_spi.SR=SPI_SR_BSY;assert(!ShiftMask(0xFE));
+  /* Sensor streaming continues while computer lights own the board. */
+  LED595_SetComputer(5000,80,100);
+  unsigned reported=environment_reports;
+  advance(SENSOR_POLL_MS);LED595_Poll();
+  assert(s_sensor_pending);
+  advance(80);LED595_Poll();assert(environment_reports==reported+1);
+  sensor_result=AHT20_CRC_ERROR;
+  advance(SENSOR_POLL_MS);LED595_Poll();
+  assert(!s_sensor_pending && environment_reports==reported+2);
   puts("PASS: effects, PWM integration, key debounce/hold, NFC priority/release/errors, split-phase sample, tick wrap, IRQ masks");
   return 0;
 }

@@ -1,6 +1,7 @@
 #include "pulse_uart.h"
 #include "pulse_protocol.h"
 #include "led_595.h"
+#include "pulse_environment.h"
 
 static UART_HandleTypeDef *s_uart;
 static uint8_t s_byte;
@@ -9,6 +10,7 @@ static volatile uint16_t s_head, s_tail;
 static volatile bool s_lost;
 static bool s_polling;
 static PulseParser s_parser;
+static uint16_t s_environment_sequence;
 
 bool PulseUART_Init(UART_HandleTypeDef *uart)
 {
@@ -16,6 +18,7 @@ bool PulseUART_Init(UART_HandleTypeDef *uart)
   s_head=s_tail=0;
   s_lost=false;
   s_parser.used=0;
+  s_environment_sequence=0;
   return HAL_UART_Receive_IT(uart,&s_byte,1)==HAL_OK;
 }
 void PulseUART_OnRx(UART_HandleTypeDef *uart)
@@ -43,6 +46,23 @@ static uint8_t Command(uint8_t type, const uint8_t *data)
 static void Send(const uint8_t *bytes, uint8_t size)
 {
   (void)HAL_UART_Transmit(s_uart,(uint8_t *)bytes,size,10U);
+}
+void PulseUART_ReportEnvironment(uint8_t status, int32_t temperature,
+                                 uint32_t humidity)
+{
+  if (!s_uart || s_polling || __get_IPSR()!=0U) return;
+  uint16_t seq=++s_environment_sequence;
+  uint8_t frame[18]={0x50,0x4c,1,0x90,(uint8_t)seq,(uint8_t)(seq>>8),9,status};
+  for (unsigned i=0;i<4;++i)
+  {
+    frame[8+i]=(uint8_t)((uint32_t)temperature>>(8*i));
+    frame[12+i]=(uint8_t)(humidity>>(8*i));
+  }
+  uint16_t crc=Pulse_Crc(frame+2,14);
+  frame[16]=(uint8_t)crc;frame[17]=(uint8_t)(crc>>8);
+  s_polling=true;
+  Send(frame,sizeof(frame));
+  s_polling=false;
 }
 void PulseUART_Poll(void)
 {
