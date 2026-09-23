@@ -5,6 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "STM32: Inspect hang (no flash, no reset)",
+            "type": "stlinkgdbtarget",
+            "request": "launch",
+            "deviceName": "STM32G070CBT6",
+            "deviceCore": "Cortex-M0+",
+            "cwd": "${workspaceFolder}",
+            "serverInterface": "SWD",
+            "serverInterfaceFrequency": "1000",
+            "serverReset": "None",
+            "imagesAndSymbols": [
+                {
+                    "symbolFileName": "${workspaceFolder}/build/epaper_project.elf"
+                }
+            ]
+        },
+        {
             "name": "Launch Chrome",
             "request": "launch",
             "type": "chrome",
